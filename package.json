@@ -38,7 +38,8 @@
     ],
     "collectCoverageFrom": [
       "src/**"
-    ]
+    ],
+    "testPathIgnorePatterns":["__fixtures__"]
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
