@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest",
     "babel-node": "babel-node",
     "eslint": "eslint",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
@@ -30,7 +30,10 @@
   },
   "homepage": "https://github.com/kitXIII/project-lvl3-s310#readme",
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageReporters": ["lcov", "text-summary"],
+    "collectCoverageFrom": ["src/**"]
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

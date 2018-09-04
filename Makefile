@@ -2,7 +2,7 @@ install:
 	npm install
 
 start:
-	npm run babel-node -- src/bin/page-loader.js
+	npx babel-node -- src/bin/page-loader.js
 
 build:
 	rm -rf dist
@@ -12,7 +12,7 @@ publish:
 	npm publish
 
 lint:
-	npm run eslint .
+	npx eslint .
 
 test:
 	npm test
