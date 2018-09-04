@@ -32,8 +32,13 @@
   "jest": {
     "testEnvironment": "node",
     "collectCoverage": true,
-    "coverageReporters": ["lcov", "text-summary"],
-    "collectCoverageFrom": ["src/**"]
+    "coverageReporters": [
+      "lcov",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "src/**"
+    ]
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

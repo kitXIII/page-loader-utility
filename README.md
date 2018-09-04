@@ -11,5 +11,16 @@ Utility that downloads a page from the network and puts it in the specified fold
 To install use npm link:
 
 git clone git://github.com/kitXIII/project-lvl3-s310.git
+
 cd project-lvl3-s310
+
+make install
+
+make build
+
 npm link
+
+
+#Usage
+
+[asciinema](https://asciinema.org/a/199614)
