@@ -1,0 +1,49 @@
+{
+  "img": {
+    "attr": "src",
+    "items": [
+      {
+        "file": "imgs/jon.png",
+        "resource": "imgs/jon.png"
+      },
+      {
+        "file": "imgs/logo.png",
+        "resource": "imgs/logo.png"
+      },
+      {
+        "file": "imgs/mock_ipad.jpg",
+        "resource": "imgs/mock_ipad.jpg"
+      },
+      {
+        "file": "imgs/mock_nexus.jpg",
+        "resource": "imgs/mock_nexus.jpg"
+      }
+    ]
+  },
+  "link": {
+    "attr": "href",
+    "items": [
+      {
+        "file": "css/base.css",
+        "resource": "css/base.css"
+      },
+      {
+        "file": "css/bootstrap.css",
+        "resource": "css/bootstrap.css"
+      }
+    ]
+  },
+  "script": {
+    "attr": "src",
+    "items": [
+      {
+        "file": "js/jquery.js",
+        "resource": "js/jquery.js"
+      },
+      {
+        "file": "js/main.js",
+        "resource": "js/main.js"
+      }
+    ]
+  }
+}
