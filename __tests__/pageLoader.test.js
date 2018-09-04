@@ -40,4 +40,13 @@ describe('Simple page load', async () => {
     nock(host).get(pathname).reply(404);
     await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios)).rejects.toThrow();
   });
+
+  test('Fail if output path - an existing path to the file', async () => {
+    const pathname = '/empty';
+    nock(host).get(pathname).reply(status, {});
+    const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+    const outputPath = path.resolve(tmpDir, 'file');
+    await fsPromises.writeFile(outputPath, 'Word', { flag: 'a+' });
+    await expect(pageLoader(`${host}${pathname}`, outputPath, axios)).rejects.toThrow();
+  });
 });
