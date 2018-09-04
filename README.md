@@ -1,6 +1,7 @@
-[![Maintainability](https://api.codeclimate.com/v1/badges/33137a6a1e48050f5c90/maintainability)](https://codeclimate.com/github/kitXIII/project-lvl3-s310/maintainability) [![Build Status](https://travis-ci.org/kitXIII/project-lvl3-s310.svg?branch=master)](https://travis-ci.org/kitXIII/project-lvl3-s310)
+[![Maintainability](https://api.codeclimate.com/v1/badges/65689336d48da74cb617/maintainability)](https://codeclimate.com/github/kitXIII/project-lvl3-s310/maintainability) 
+[![Test Coverage](https://api.codeclimate.com/v1/badges/65689336d48da74cb617/test_coverage)](https://codeclimate.com/github/kitXIII/project-lvl3-s310/test_coverage) [![Build Status](https://travis-ci.org/kitXIII/project-lvl3-s310.svg?branch=master)](https://travis-ci.org/kitXIII/project-lvl3-s310)
 
-# Console gendiff utility
+# Console page load utility
 
 
-Page load utility.
+Utility that downloads a page from the network and puts it in the specified folder.
