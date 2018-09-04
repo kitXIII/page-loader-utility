@@ -2,3 +2,4 @@
 dist
 *.log
 /.vscode/
+coverage
