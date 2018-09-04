@@ -6,22 +6,30 @@
 
 Utility that downloads a page from the network and puts it in the specified folder.
 
-# Install
 
-To install use npm link:
-
-git clone git://github.com/kitXIII/project-lvl3-s310.git
-
-cd project-lvl3-s310
-
-make install
-
-make build
-
-npm link
+## Install
 
 
-# Usage
+`$ npm install -g kit-page-loader`
+
+
+## Get help
+
+
+`$ page-loader --help`
+
+
+## Usage
+
+
+`$ page-loader <url>`
+
+To specify output dir, use --output option:
+
+`$ page-loader --output [path] <url>`
+
+
+## Example
 
 
 [asciinema](https://asciinema.org/a/199614)
