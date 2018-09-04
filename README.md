@@ -21,6 +21,6 @@ make build
 npm link
 
 
-#Usage
+# Usage
 
 [asciinema](https://asciinema.org/a/199614)
