@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
-// import cheerio from 'cheerio';
-// import _ from 'lodash';
 
 const getFileName = url => `${url.match(/(?<=https?:\/\/).+/i)[0].replace(/\W/g, '-')}.html`;
 
