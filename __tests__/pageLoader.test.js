@@ -8,10 +8,11 @@ import pageLoader from '../src';
 
 axios.defaults.adapter = httpAdapter;
 
+const host = 'http://localhost';
+const status = 200;
+
 describe('Simple page load', async () => {
-  const host = 'http://localhost';
-  const status = 200;
-  const bodyFilePath = path.resolve(__dirname, '__fixtures__/index.html');
+  const bodyFilePath = path.resolve(__dirname, '__fixtures__/simple.html');
 
   test('Download page and write to file', async () => {
     const pathname = '/page';
@@ -49,4 +50,8 @@ describe('Simple page load', async () => {
     await fsPromises.writeFile(outputPath, 'Word', { flag: 'a+' });
     await expect(pageLoader(`${host}${pathname}`, outputPath, axios)).rejects.toThrow();
   });
+});
+
+describe('Load page with local links', () => {
+  const bodyFilePath = path.resolve(__dirname, '__fixtures__/index.html');
 });

@@ -34,8 +34,7 @@
     "testEnvironment": "node",
     "collectCoverage": true,
     "coverageReporters": [
-      "lcov",
-      "text-summary"
+      "lcov"
     ],
     "collectCoverageFrom": [
       "src/**"

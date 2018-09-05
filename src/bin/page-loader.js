@@ -11,7 +11,6 @@ program
   .arguments('<url>')
   .action((url, options) => {
     const { output } = options;
-    console.log('output ', output);
     pageLoad(url, output);
   })
   .parse(process.argv);
