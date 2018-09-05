@@ -26,8 +26,7 @@ export default (url, outputDir, requester = axios) => requester.get(url)
     return response.data;
   })
   .then((data) => {
-    const fileName = getFileName(url);
-    const outputPath = outputDir ? path.join(outputDir, fileName) : fileName;
+    const outputPath = path.join(outputDir, getFileName(url));
     return makeDir(outputDir)
       .then(() => fsPromises.writeFile(outputPath, data, { encoding: 'utf8', mode: 0o777, flag: 'a+' }));
   });
