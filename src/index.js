@@ -4,9 +4,11 @@ import path from 'path';
 
 const getFileName = url => `${url.match(/(?<=https?:\/\/).+/i)[0].replace(/\W/g, '-')}.html`;
 
-const makeDir = dirPath => (dirPath === undefined
-  ? Promise.resolve()
-  : fsPromises.stat(dirPath)
+const makeDir = (dirPath) => {
+  if (dirPath === undefined) {
+    return Promise.resolve();
+  }
+  return fsPromises.stat(dirPath)
     .then((stat) => {
       if (stat.isFile()) {
         throw new Error(`On path ${dirPath} there is a file`);
@@ -18,8 +20,8 @@ const makeDir = dirPath => (dirPath === undefined
         return fsPromises.mkdir(dirPath);
       }
       throw error;
-    })
-);
+    });
+};
 
 export default (url, outputDir, requester = axios) => requester.get(url)
   .then((response) => {
