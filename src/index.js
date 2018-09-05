@@ -1,27 +1,24 @@
 import axios from 'axios';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
+import cheerio from 'cheerio';
+import _ from 'lodash';
 
 const getFileName = url => `${url.match(/(?<=https?:\/\/).+/i)[0].replace(/\W/g, '-')}.html`;
 
-const makeDir = (dirPath) => {
-  if (dirPath === undefined) {
-    return Promise.resolve();
-  }
-  return fsPromises.stat(dirPath)
-    .then((stat) => {
-      if (stat.isFile()) {
-        throw new Error(`On path ${dirPath} there is a file`);
-      }
-      return true;
-    })
-    .catch((error) => {
-      if (error.code === 'ENOENT') {
-        return fsPromises.mkdir(dirPath);
-      }
-      throw error;
-    });
-};
+const makeDir = dirPath => fsPromises.stat(dirPath)
+  .then((stat) => {
+    if (stat.isFile()) {
+      throw new Error(`On path ${dirPath} there is a file`);
+    }
+    return true;
+  })
+  .catch((error) => {
+    if (error.code === 'ENOENT') {
+      return fsPromises.mkdir(dirPath);
+    }
+    throw error;
+  });
 
 export default (url, outputDir, requester = axios) => requester.get(url)
   .then((response) => {
