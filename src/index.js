@@ -1,17 +1,21 @@
 import axios from 'axios';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
+import url from 'url';
 import cheerio from 'cheerio';
 import _ from 'lodash';
-import url from 'url';
 
-const getName = (link, type) => {
-  const translators = {
-    html: uri => `${uri.match(/(?<=https?:\/\/).+/i)[0].replace(/\W/g, '-')}.html`,
-    dir: uri => `${uri.match(/(?<=https?:\/\/).+/i)[0].replace(/\W/g, '-')}_files`,
-    file: pathname => pathname.match(/^\/?(.+)/i)[1].replace(/\W+(?!\w+$)/g, '-'),
-  };
-  return translators[type](link);
+const getNameByUrl = (uri, postfix) => {
+  const { hostname, pathname } = url.parse(uri);
+  const hostParts = hostname.split('.');
+  const pathParts = pathname.split('/').filter(v => v);
+  return `${_.concat(hostParts, pathParts).join('-')}${postfix}`;
+};
+
+const getNameByPathname = (pathname) => {
+  const { dir, base } = path.parse(pathname);
+  const dirParts = dir.split('/').filter(v => v);
+  return _.concat(dirParts, base).join('-');
 };
 
 const makeDir = dirPath => fsPromises.stat(dirPath)
@@ -37,7 +41,7 @@ const getLocalResoucesLinks = (content) => {
     const elements = $(tag).map((i, elem) => $(elem).attr(atributes[tag]));
     const links = Array.from(elements).filter(item => item.search('://') === -1);
     const resultLinks = _.uniq(links);
-    return resultLinks.map(pathname => ({ pathname, type: tag, filename: getName(pathname, 'file') }));
+    return resultLinks.map(pathname => ({ pathname, tag, filename: getNameByPathname(pathname) }));
   });
   return _.flatten(result);
 };
@@ -47,7 +51,6 @@ const loadResources = (uri, outputPath, content, loader) => {
   if (links.length === 0) {
     return content;
   }
-  console.log(links);
   const { protocol, host } = url.parse(uri);
   const arrayOfPromises = links.map((link) => {
     const config = {
@@ -73,10 +76,10 @@ export default (uri, outputDir, loader = axios) => makeDir(outputDir)
   .then(() => loader.get(uri))
   .then(response => response.data)
   .then((data) => {
-    const resourcePath = path.join(outputDir, getName(uri, 'dir'));
+    const resourcePath = path.join(outputDir, getNameByUrl(uri, '_files'));
     return loadResources(uri, resourcePath, data, loader);
   })
   .then((data) => {
-    const outputPath = path.join(outputDir, getName(uri, 'html'));
+    const outputPath = path.join(outputDir, getNameByUrl(uri, '.html'));
     return fsPromises.writeFile(outputPath, data, 'utf8');
   });
