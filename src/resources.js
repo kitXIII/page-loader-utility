@@ -15,14 +15,14 @@ const resources = [
     tagName: 'script',
     srcAttr: 'src',
     responseType: 'text',
-    savePromise: (response, filePath) => fsPromises.writeFile(filePath, response.data, 'utf8'),
+    save: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
   },
   {
     tagName: 'img',
     srcAttr: 'src',
     responseType: 'arraybuffer',
-    savePromise: (response, filePath) => {
-      const binaryData = Buffer.from(response.data);
+    save: (data, filePath) => {
+      const binaryData = Buffer.from(data);
       return fsPromises.writeFile(filePath, binaryData);
     },
   },
@@ -30,7 +30,7 @@ const resources = [
     tagName: 'link',
     srcAttr: 'href',
     responseType: 'text',
-    savePromise: (response, filePath) => fsPromises.writeFile(filePath, response.data, 'utf8'),
+    save: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
   },
 ];
 
@@ -57,25 +57,20 @@ const changeLocalResourcesLinks = (content, links, outputPath) => {
   return $.html();
 };
 
-const loadResource = (uri, resource, outputPath, loader) => loader
-  .get(url.resolve(uri, resource.pathname), { responseType: resource.responseType })
+const loadResource = (uri, link, outputPath, loader) => loader
+  .get(url.resolve(uri, link.pathname), { responseType: link.responseType })
   .then((response) => {
-    const savePath = path.resolve(outputPath, getNameByPathname(resource.pathname));
-    return resource.savePromise(response, savePath);
+    const savePath = path.resolve(outputPath, getNameByPathname(link.pathname));
+    return link.save(response.data, savePath);
   })
-  .then(() => resource);
+  .then(() => link);
 
-const loadResources = (uri, links, outputPath, content, loader) => fsPromises.mkdir(outputPath)
-  .then(() => {
-    const arrayOfPromises = links.map(resource => loadResource(uri, resource, outputPath, loader));
-    return Promise.all(arrayOfPromises);
-  })
-  .then(processedLinks => changeLocalResourcesLinks(content, processedLinks, outputPath));
-
-export default (uri, outputPath, content, loader) => {
-  const links = getLocalResoucesLinks(content);
-  if (links.length === 0) {
-    return content;
-  }
-  return loadResources(uri, links, outputPath, content, loader);
-};
+export default (uri, outputPath, content, loader) => fsPromises.mkdir(outputPath)
+  .then(() => getLocalResoucesLinks(content))
+  .then(links => Promise.all(links.map(link => loadResource(uri, link, outputPath, loader))))
+  .then((links) => {
+    if (links.length === 0) {
+      return content;
+    }
+    return changeLocalResourcesLinks(content, links, outputPath);
+  });
