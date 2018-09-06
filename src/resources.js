@@ -15,19 +15,22 @@ const resources = [
     tagName: 'script',
     srcAttr: 'src',
     responseType: 'text',
-    savePromise: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
+    savePromise: (response, filePath) => fsPromises.writeFile(filePath, response.data, 'utf8'),
   },
   {
     tagName: 'img',
     srcAttr: 'src',
-    responseType: 'stream',
-    savePromise: (data, filePath) => fsPromises.writeFile(filePath, data),
+    responseType: 'arraybuffer',
+    savePromise: (response, filePath) => {
+      const binaryData = Buffer.from(response.data);
+      return fsPromises.writeFile(filePath, binaryData);
+    },
   },
   {
     tagName: 'link',
     srcAttr: 'href',
     responseType: 'text',
-    savePromise: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
+    savePromise: (response, filePath) => fsPromises.writeFile(filePath, response.data, 'utf8'),
   },
 ];
 
@@ -43,27 +46,36 @@ const getLocalResoucesLinks = (content) => {
   return _.flatten(result);
 };
 
+const changeLocalResourcesLinks = (content, links, outputPath) => {
+  const $ = cheerio.load(content);
+  links.forEach((link) => {
+    const filePath = path.resolve(outputPath, getNameByPathname(link.pathname));
+    const baseDirPath = path.resolve(outputPath, '..');
+    const newPath = path.relative(baseDirPath, filePath);
+    return $(`${link.tagName}[${link.srcAttr} = "${link.pathname}"]`).attr(link.srcAttr, newPath);
+  });
+  return $.html();
+};
+
 const loadResource = (uri, resource, outputPath, loader) => loader
   .get(url.resolve(uri, resource.pathname), { responseType: resource.responseType })
-  .then(response => response.data)
-  .then((data) => {
+  .then((response) => {
     const savePath = path.resolve(outputPath, getNameByPathname(resource.pathname));
-    console.log(savePath);
-    return resource.savePromise(data, savePath);
+    return resource.savePromise(response, savePath);
   })
   .then(() => resource);
 
-const loadResources = (uri, links, outputPath, loader) => fsPromises.mkdir(outputPath)
+const loadResources = (uri, links, outputPath, content, loader) => fsPromises.mkdir(outputPath)
   .then(() => {
     const arrayOfPromises = links.map(resource => loadResource(uri, resource, outputPath, loader));
     return Promise.all(arrayOfPromises);
-  });
+  })
+  .then(processedLinks => changeLocalResourcesLinks(content, processedLinks, outputPath));
 
 export default (uri, outputPath, content, loader) => {
   const links = getLocalResoucesLinks(content);
   if (links.length === 0) {
     return content;
   }
-  return loadResources(uri, links, outputPath, loader)
-    .then(() => content);
+  return loadResources(uri, links, outputPath, content, loader);
 };
