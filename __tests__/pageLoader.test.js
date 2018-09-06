@@ -77,15 +77,23 @@ describe('Download local resources', () => {
     const recivedCssFilePath = path.resolve(assetsDir, 'assets-css-base.css');
     const recivedJsFilePath = path.resolve(assetsDir, 'assets-js-main.js');
     const recivedImgFilePath = path.resolve(assetsDir, 'assets-imgs-logo.png');
+    const recivedHtmlFilePath = path.join(tmpDir, 'localhost-page-with-links.html');
 
     const recivedCss = await fsPromises.readFile(recivedCssFilePath, 'utf8');
     const recivedJs = await fsPromises.readFile(recivedJsFilePath, 'utf8');
     const recivedImg = await fsPromises.readFile(recivedImgFilePath);
     const listOfRecivedfiles = await fsPromises.readdir(assetsDir);
+    const recivedHtml = await fsPromises.readFile(recivedHtmlFilePath, 'utf8');
 
     expect(listOfRecivedfiles).toEqual(['assets-css-base.css', 'assets-imgs-logo.png', 'assets-js-main.js']);
     expect(recivedCss).toBe(css);
     expect(recivedJs).toBe(js);
     expect(recivedImg).toEqual(img);
+    expect(recivedHtml).toMatch('localhost-page-with-links_files/assets-css-base.css');
+    expect(recivedHtml).toMatch('localhost-page-with-links_files/assets-js-main.js');
+    expect(recivedHtml).toMatch('localhost-page-with-links_files/assets-imgs-logo.png');
+    expect(recivedHtml).not.toMatch('/assets/css/base.css');
+    expect(recivedHtml).not.toMatch('/assets/js/main.js');
+    expect(recivedHtml).not.toMatch('/assets/imgs/logo.png');
   });
 });
