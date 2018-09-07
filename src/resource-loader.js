@@ -3,6 +3,11 @@ import path from 'path';
 import url from 'url';
 import cheerio from 'cheerio';
 import _ from 'lodash';
+import debug from 'debug';
+
+import makeDir from './utils';
+
+const log = debug('page-loader:load_resources');
 
 const getNameByPathname = (pathname) => {
   const { dir, base } = path.parse(pathname);
@@ -34,9 +39,8 @@ const resources = [
   },
 ];
 
-const getLocalResoucesLinks = (content) => {
-  const $ = cheerio.load(content);
-
+const getLocalResoucesLinks = (page) => {
+  const $ = cheerio.load(page);
   const result = resources.map((tag) => {
     const elements = $(tag.tagName).map((i, elem) => $(elem).attr(tag.srcAttr));
     const links = Array.from(elements).filter(item => item.search('://') === -1);
@@ -46,8 +50,8 @@ const getLocalResoucesLinks = (content) => {
   return _.flatten(result);
 };
 
-const changeLocalResourcesLinks = (content, links, outputPath) => {
-  const $ = cheerio.load(content);
+const changeLocalResourcesLinks = (page, links, outputPath) => {
+  const $ = cheerio.load(page);
   links.forEach((link) => {
     const filePath = path.resolve(outputPath, getNameByPathname(link.pathname));
     const baseDirPath = path.resolve(outputPath, '..');
@@ -57,20 +61,48 @@ const changeLocalResourcesLinks = (content, links, outputPath) => {
   return $.html();
 };
 
-const loadResource = (uri, link, outputPath, loader) => loader
-  .get(url.resolve(uri, link.pathname), { responseType: link.responseType })
+const loadResource = (uri, link, outputPath, loader) => Promise.resolve(log(`Try to load resource ${link.pathname}`))
+  .then(() => loader.get(url.resolve(uri, link.pathname), { responseType: link.responseType }))
   .then((response) => {
+    log(`Received a response with status ${response.status}`);
     const savePath = path.resolve(outputPath, getNameByPathname(link.pathname));
+    log(`Try to save received resource on ${savePath}`);
     return link.save(response.data, savePath);
   })
-  .then(() => link);
+  .then(() => {
+    log(`Resource ${link.pathname} was saved localy`);
+    return link;
+  });
 
-export default (uri, outputPath, content, loader) => fsPromises.mkdir(outputPath)
-  .then(() => getLocalResoucesLinks(content))
-  .then(links => Promise.all(links.map(link => loadResource(uri, link, outputPath, loader))))
-  .then((links) => {
-    if (links.length === 0) {
-      return content;
+export default (uri, outputPath, page, loader) => Promise.resolve(log(`Try to load resources of page ${uri}`))
+  .then(() => {
+    log('Try to get local resources links');
+    const links = getLocalResoucesLinks(page);
+    const count = links.length;
+    log(`Links to resources are received in quantity: ${count}`);
+    if (count === 0) {
+      throw new Error('NO LINKS');
     }
-    return changeLocalResourcesLinks(content, links, outputPath);
+    return links;
+  })
+  .then(links => Promise.all([
+    makeDir(outputPath),
+    Promise.all(links.map(link => loadResource(uri, link, outputPath, loader))),
+  ]))
+  .then(([, links]) => {
+    log('Begin to change local resources links');
+    const changedPage = changeLocalResourcesLinks(page, links, outputPath);
+    log(`Links to resources of page ${uri} was changed`);
+    return changedPage;
+  })
+  .then((html) => {
+    log('SUCCESS');
+    return html;
+  })
+  .catch((error) => {
+    if (error.message === 'NO LINKS') {
+      log('No links to load, return page');
+      return page;
+    }
+    throw error;
   });

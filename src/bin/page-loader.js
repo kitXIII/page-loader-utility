@@ -2,7 +2,10 @@
 
 import program from 'commander';
 import pageLoad from '..';
+import debug from 'debug';
 import { version } from '../../package.json';
+
+const log = debug('page-loader');
 
 program
   .version(version)
@@ -11,7 +14,12 @@ program
   .arguments('<url>')
   .action((url, options) => {
     const { output } = options;
-    pageLoad(url, output);
+    log('application start!');
+    pageLoad(url, output)
+      .catch(e => console.log(e.message))
+      .then(() => {
+        log('application has successfully completed its work!');
+      });
   })
   .parse(process.argv);
 
