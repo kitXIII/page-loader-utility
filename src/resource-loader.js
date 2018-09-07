@@ -118,10 +118,7 @@ export default (uri, outputPath, page, loader) => {
       log('Begin to change local resources links');
       const changedPage = changeLocalResourcesLinks(page, loadedLinks, outputPath);
       log(`Links to resources of page ${uri} was changed`);
-      return changedPage;
-    })
-    .then((html) => {
       log('SUCCESS');
-      return html;
+      return changedPage;
     });
 };
