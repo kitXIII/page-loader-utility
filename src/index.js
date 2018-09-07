@@ -17,34 +17,31 @@ const getNameByUrl = (uri, postfix) => {
   return `${_.concat(hostParts, pathParts).join('-')}${postfix}`;
 };
 
-const isDirectoryExists = (dir) => {
-  log(`Check if output directory ${dir} exists`);
-  return fsPromises.readdir(dir);
+export default (uri, outputDir, loader = axios) => {
+  log(`Check if output directory ${outputDir} exists`);
+  const pageFilePath = path.join(outputDir, getNameByUrl(uri, '.html'));
+  const resourcesPath = path.join(outputDir, getNameByUrl(uri, '_files'));
+  return fsPromises.readdir(outputDir)
+    .then(() => {
+      log(`Try to load page ${uri}`);
+      return loader.get(uri);
+    })
+    .then((response) => {
+      log(`Received a response with status ${response.status}`);
+      return response.data;
+    })
+    .then(page => loadResources(uri, resourcesPath, page, loader))
+    .then((processedPage) => {
+      log(`Try to save page to ${pageFilePath}`);
+      return fsPromises.writeFile(pageFilePath, processedPage, 'utf8');
+    })
+    .then(() => {
+      log('SUCCESS');
+      return null;
+    })
+    .catch((error) => {
+      const msg = error ? error.message : '';
+      errorlog(`FAIL with error: ${msg}`);
+      throw error;
+    });
 };
-
-export default (uri, outputDir, loader = axios) => isDirectoryExists(outputDir)
-  .then(() => {
-    log(`Try to load page ${uri}`);
-    return loader.get(uri);
-  })
-  .then((response) => {
-    log(`Received a response with status ${response.status}`);
-    return response.data;
-  }).then((data) => {
-    const resourcePath = path.join(outputDir, getNameByUrl(uri, '_files'));
-    return loadResources(uri, resourcePath, data, loader);
-  })
-  .then((data) => {
-    const outputPath = path.join(outputDir, getNameByUrl(uri, '.html'));
-    log(`Try to save page to ${outputPath}`);
-    return fsPromises.writeFile(outputPath, data, 'utf8');
-  })
-  .then(() => {
-    log('SUCCESS');
-    return null;
-  })
-  .catch((error) => {
-    const msg = error ? error.message : '';
-    errorlog(`FAIL with error: ${msg}`);
-    throw error;
-  });
