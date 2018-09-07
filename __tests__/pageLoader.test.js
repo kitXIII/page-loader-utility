@@ -27,13 +27,13 @@ describe('Simple page load', () => {
     return expect(receivedData).toBe(body);
   });
 
-  test('Create output directory if it does not exist', async () => {
+  test('Fail if output directory does not exist', async () => {
     const pathname = '/empty';
     const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
     const output = path.resolve(tmpDir, 'internal');
     nock(host).get(pathname).reply(status, {});
-    await pageLoader(`${host}${pathname}`, output, axios);
-    return expect(fsPromises.readdir(tmpDir)).resolves.toContain('internal');
+    await expect(pageLoader(`${host}${pathname}`, output, axios)).rejects.toThrow();
+    await expect(fsPromises.readdir(tmpDir)).resolves.not.toContain('internal');
   });
 
   test('Fail on http-response status not equal 200', async () => {

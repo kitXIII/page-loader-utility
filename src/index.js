@@ -5,7 +5,6 @@ import url from 'url';
 import _ from 'lodash';
 import debug from 'debug';
 
-import makeDir from './utils';
 import loadResources from './resource-loader';
 
 const log = debug('page-loader:load_page');
@@ -18,16 +17,20 @@ const getNameByUrl = (uri, postfix) => {
   return `${_.concat(hostParts, pathParts).join('-')}${postfix}`;
 };
 
-export default (uri, outputDir, loader = axios) => Promise.resolve(log(`Try to load page ${uri}`))
-  .then(() => loader.get(uri))
+const isDirectoryExists = (dir) => {
+  log(`Check if output directory ${dir} exists`);
+  return fsPromises.readdir(dir);
+};
+
+export default (uri, outputDir, loader = axios) => isDirectoryExists(outputDir)
+  .then(() => {
+    log(`Try to load page ${uri}`);
+    return loader.get(uri);
+  })
   .then((response) => {
     log(`Received a response with status ${response.status}`);
     return response.data;
-  })
-  // .then(data => makeDir(outputDir)
-  //   .then(() => data))
-  .then(data => Promise.all([makeDir(outputDir), Promise.resolve(data)]))
-  .then(([, data]) => {
+  }).then((data) => {
     const resourcePath = path.join(outputDir, getNameByUrl(uri, '_files'));
     return loadResources(uri, resourcePath, data, loader);
   })

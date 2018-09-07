@@ -3,7 +3,7 @@ install:
 
 run:
 	rm -rf trash/*
-	npm run babel-node -- src/bin/page-loader.js --output trash https://www.iana.org/domains/reserved
+	DEBUG="page-loader*" npm run babel-node -- src/bin/page-loader.js --output trash https://www.iana.org/domains/reserved
 
 build:
 	rm -rf dist

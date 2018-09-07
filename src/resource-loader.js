@@ -5,8 +5,6 @@ import cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
 
-import makeDir from './utils';
-
 const log = debug('page-loader:load_resources');
 
 const getNameByPathname = (pathname) => {
@@ -60,6 +58,20 @@ const changeLocalResourcesLinks = (page, links, outputPath) => {
   });
   return $.html();
 };
+
+const makeDir = dirPath => Promise.resolve(log(`Check, is dir exists ${dirPath}`))
+  .then(() => fsPromises.readdir(dirPath))
+  .catch((error) => {
+    if (error.code === 'ENOENT') {
+      log(`It is empty path, try make directory ${dirPath}`);
+      return fsPromises.mkdir(dirPath);
+    }
+    throw error;
+  })
+  .then(() => {
+    log(`Directory ${dirPath} was created`);
+    return null;
+  });
 
 const loadResource = (uri, link, outputPath, loader) => Promise.resolve(log(`Try to load resource ${link.pathname}`))
   .then(() => loader.get(url.resolve(uri, link.pathname), { responseType: link.responseType }))

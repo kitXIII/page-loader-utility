@@ -18,7 +18,7 @@ program
     pageLoad(url, output)
       .catch(e => console.log(e.message))
       .then(() => {
-        log('application has successfully completed its work!');
+        log('application has successfully completed!');
       });
   })
   .parse(process.argv);
