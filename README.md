@@ -32,4 +32,10 @@ To specify output dir, use --output option:
 ## Example
 
 
-[asciinema](https://asciinema.org/a/199777)
+[asciinema](https://asciinema.org/a/200196)
+
+
+## Example debug output
+
+
+[asciinema](https://asciinema.org/a/200191)
