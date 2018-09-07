@@ -82,7 +82,7 @@ const loadResource = (uri, link, outputPath, loader) => {
   log(`Try to load resource ${pathname}`);
   return loader.get(url.resolve(uri, pathname), { responseType })
     .then((response) => {
-      log(`Received a response with status ${response.status}`);
+      log(`Response status: ${response.status}`);
       return response.data;
     })
     .then((data) => {

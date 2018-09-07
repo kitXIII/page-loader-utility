@@ -27,7 +27,7 @@ export default (uri, outputDir, loader = axios) => {
       return loader.get(uri);
     })
     .then((response) => {
-      log(`Received a response with status ${response.status}`);
+      log(`Response status: ${response.status}`);
       return response.data;
     })
     .then(page => loadResources(uri, resourcesPath, page, loader))
