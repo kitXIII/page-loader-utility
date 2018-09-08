@@ -42,7 +42,7 @@ const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`)
       case 'ENOENT':
         throw new Error(`Output directory "${outputDir}" not exists`);
       case 'EACCES':
-        throw new Error(`Access "${outputDir}" denied. Check your permissions`);
+        throw new Error(`Access to "${outputDir}" denied. Check your permissions`);
       default:
         throw error;
     }
