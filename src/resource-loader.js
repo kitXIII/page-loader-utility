@@ -54,9 +54,7 @@ const changeLocalResourcesLinks = (page, links, outputPath) => {
   const $ = cheerio.load(page);
   links.forEach(({ pathname, tag }) => {
     const { srcAttr } = getTagObject(tag);
-    const filePath = path.resolve(outputPath, getNameByPathname(pathname));
-    const baseDirPath = path.resolve(outputPath, '..');
-    const newPath = path.relative(baseDirPath, filePath);
+    const newPath = path.join(path.basename(outputPath), getNameByPathname(pathname));
     return $(`${tag}[${srcAttr} = "${pathname}"]`).attr(srcAttr, newPath);
   });
   return $.html();
