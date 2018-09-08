@@ -26,7 +26,8 @@ const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
     return urlObj;
   })
   .then(({ protocol, host }) => {
-    if ((protocol !== 'http' && protocol !== 'https') || !host) {
+    if ((protocol !== 'http:' && protocol !== 'https:') || !host) {
+      log(`Protocol: ${protocol}, host: ${host} is valid`);
       throw new Error(`URL "${uri}" is not valid`);
     }
     log(`URL "${uri}" is valid`);
