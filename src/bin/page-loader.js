@@ -13,10 +13,13 @@ program
   .option('-o, --output [path]', 'path to save the downloaded page', process.cwd())
   .arguments('<url>')
   .action((url, options) => {
-    const { output } = options;
     log('application start!');
+    const { output } = options;
     pageLoad(url, output)
-      .catch(e => console.log(e.message))
+      .catch((error) => {
+        console.error(error.message);
+        process.exitCode = 1;
+      })
       .then(() => {
         log('application has successfully completed!');
       });
