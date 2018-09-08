@@ -5,7 +5,6 @@ import url from 'url';
 import _ from 'lodash';
 import debug from 'debug';
 
-import AppError from './error';
 import loadResources from './resource-loader';
 
 const log = debug('page-loader:load_page');
@@ -21,14 +20,14 @@ const getNameByUrl = (uri, postfix) => {
 const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
   .then(() => {
     if (!_.isString(uri)) {
-      throw new AppError('URL is not string');
+      throw new Error('URL is not string');
     }
     const urlObj = url.parse(uri);
     return urlObj;
   })
   .then(({ protocol, host }) => {
     if ((protocol !== 'http' && protocol !== 'https') || !host) {
-      throw new AppError(`URL "${uri}" is not valid`);
+      throw new Error(`URL "${uri}" is not valid`);
     }
     log(`URL "${uri}" is valid`);
     return true;
@@ -39,9 +38,9 @@ const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`)
   .catch((error) => {
     switch (error.code) {
       case 'ENOTDIR':
-        throw new AppError(`Parameter --output "${outputDir}" is file`);
+        throw new Error(`Parameter --output "${outputDir}" is file`);
       case 'ENOENT':
-        throw new AppError(`Output directory "${outputDir}" not exists`);
+        throw new Error(`Output directory "${outputDir}" not exists`);
       default:
         throw error;
     }
@@ -79,10 +78,6 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
     return null;
   })
   .catch((error) => {
-    if (error instanceof AppError) {
-      console.error(error.message);
-      return null;
-    }
     errorlog(`FAIL with error: ${error.message}`);
     throw error;
   });

@@ -16,13 +16,12 @@ program
     log('application start!');
     const { output } = options;
     pageLoad(url, output)
-      .catch((error) => {
-        log('application error');
-        console.error(error.message);
-        process.exitCode = 1;
-      })
       .then(() => {
         log('application has successfully completed!');
+      }, (error) => {
+        console.error(error.message);
+        log('application error');
+        process.exitCode = 1;
       });
   })
   .parse(process.argv);
