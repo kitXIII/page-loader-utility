@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import program from 'commander';
-import pageLoad from '..';
 import debug from 'debug';
 import { version } from '../../package.json';
+import pageLoad from '..';
 
 const log = debug('page-loader');
 
@@ -17,6 +17,7 @@ program
     const { output } = options;
     pageLoad(url, output)
       .catch((error) => {
+        log('application error');
         console.error(error.message);
         process.exitCode = 1;
       })

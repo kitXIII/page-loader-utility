@@ -4,7 +4,9 @@ import path from 'path';
 import { promises as fsPromises } from 'fs';
 import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http';
+
 import pageLoader from '../src';
+import AppError from './errors';
 
 axios.defaults.adapter = httpAdapter;
 
@@ -95,5 +97,14 @@ describe('Download local resources', () => {
     expect(recivedHtml).not.toMatch('/assets/css/base.css');
     expect(recivedHtml).not.toMatch('/assets/js/main.js');
     expect(recivedHtml).not.toMatch('/assets/imgs/logo.png');
+  });
+});
+
+describe('Downloading errors tests', () => {
+  test('Fails when the URL is not valid', async () => {
+    const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+    await expect(pageLoader('.', outputPath, axios)).rejects.toThrow();
+    await expect(pageLoader('/addr', outputPath, axios)).rejects.toThrow();
+    await expect(pageLoader('ftp://localhost.ru', outputPath, axios)).rejects.toThrow();
   });
 });

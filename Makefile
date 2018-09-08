@@ -5,6 +5,10 @@ run:
 	rm -rf trash/*
 	DEBUG="page-loader*" npm run babel-node -- src/bin/page-loader.js --output trash https://www.iana.org/domains/reserved
 
+run1:
+	rm -rf trash/*
+	DEBUG="page-loader*" npm run babel-node -- src/bin/page-loader.js --output nodir https://www.iana.org/domains/reserved
+
 build:
 	rm -rf dist
 	npm run build
