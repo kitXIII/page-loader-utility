@@ -6,7 +6,6 @@ import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http';
 
 import pageLoader from '../src';
-import AppError from './errors';
 
 axios.defaults.adapter = httpAdapter;
 
