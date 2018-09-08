@@ -80,7 +80,7 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
   })
   .catch((error) => {
     if (error instanceof AppError) {
-      console.error(error.message);      
+      console.error(error.message);
       return null;
     }
     errorlog(`FAIL with error: ${error.message}`);
