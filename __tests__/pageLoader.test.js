@@ -21,35 +21,9 @@ describe('Simple page load', () => {
     const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
 
     nock(host).get(pathname).reply(status, body);
-
     await pageLoader(`${host}${pathname}`, tmpDir, axios);
-
     const receivedData = await fsPromises.readFile(path.join(tmpDir, 'localhost-page.html'), 'utf8');
     return expect(receivedData).toBe(body);
-  });
-
-  test('Fail if output directory does not exist', async () => {
-    const pathname = '/empty';
-    const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
-    const output = path.resolve(tmpDir, 'internal');
-    nock(host).get(pathname).reply(status, {});
-    await expect(pageLoader(`${host}${pathname}`, output, axios)).rejects.toThrow();
-    await expect(fsPromises.readdir(tmpDir)).resolves.not.toContain('internal');
-  });
-
-  test('Fail on http-response status not equal 200', async () => {
-    const pathname = '/fail';
-    nock(host).get(pathname).reply(404);
-    await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios)).rejects.toThrow();
-  });
-
-  test('Fail if output path - an existing path to the file', async () => {
-    const pathname = '/empty';
-    nock(host).get(pathname).reply(status, {});
-    const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
-    const outputPath = path.resolve(tmpDir, 'file');
-    await fsPromises.writeFile(outputPath, 'Word', { flag: 'a+' });
-    await expect(pageLoader(`${host}${pathname}`, outputPath, axios)).rejects.toThrow();
   });
 });
 
@@ -99,11 +73,41 @@ describe('Download local resources', () => {
   });
 });
 
-describe('Downloading errors tests', () => {
-  test('Fails when the URL is not valid', async () => {
+describe('Error messages tests', () => {
+  describe('Output directory errors', () => {
+    nock(host).get(host).reply(status, {});
+
+    test('Fail when output directory not exists', async () => {
+      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      const output = path.resolve(tmpDir, 'nodirectory');
+      await expect(pageLoader(`${host}`, output, axios)).rejects.toThrow();
+      await expect(fsPromises.readdir(tmpDir)).resolves.not.toContain('nodirectory');
+    });
+
+    test('Fail when output is file', async () => {
+      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      const outputPath = path.resolve(tmpDir, 'file');
+      await fsPromises.writeFile(outputPath, 'Word', { flag: 'a+' });
+      await expect(pageLoader(`${host}`, outputPath, axios)).rejects.toThrow();
+    });
+
+    test('Fail when no access to output directory', async () => {
+      const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      await fsPromises.chmod(outputPath, 0o555);
+      await expect(pageLoader(`${host}`, outputPath, axios)).rejects.toThrow();
+    });
+  });
+
+  test('Fail when URL is not valid', async () => {
     const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
     await expect(pageLoader('.', outputPath, axios)).rejects.toThrow();
     await expect(pageLoader('/addr', outputPath, axios)).rejects.toThrow();
     await expect(pageLoader('ftp://localhost.ru', outputPath, axios)).rejects.toThrow();
+  });
+
+  test('Fail on http-response status not equal 200', async () => {
+    const pathname = '/fail';
+    nock(host).get(pathname).reply(404);
+    await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios)).rejects.toThrow();
   });
 });

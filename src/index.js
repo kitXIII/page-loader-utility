@@ -1,11 +1,13 @@
 import axios from 'axios';
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import _ from 'lodash';
 import debug from 'debug';
 
 import loadResources from './resource-loader';
+
+const { promises: fsPromises } = fs;
 
 const log = debug('page-loader:load_page');
 const errorlog = debug('page-loader:error');
@@ -18,16 +20,12 @@ const getNameByUrl = (uri, postfix) => {
 };
 
 const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
-  .then(() => {
-    if (!_.isString(uri)) {
-      throw new Error('URL is not string');
-    }
-    const urlObj = url.parse(uri);
-    return urlObj;
+  .then(() => url.parse(uri))
+  .catch(() => {
+    throw new Error('Can not read input URL');
   })
   .then(({ protocol, host }) => {
     if ((protocol !== 'http:' && protocol !== 'https:') || !host) {
-      log(`Protocol: ${protocol}, host: ${host} is valid`);
       throw new Error(`URL "${uri}" is not valid`);
     }
     log(`URL "${uri}" is valid`);
@@ -35,13 +33,16 @@ const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
   });
 
 const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`))
+  .then(() => fsPromises.access(outputDir, fs.constants.W_OK))
   .then(() => fsPromises.readdir(outputDir))
   .catch((error) => {
     switch (error.code) {
       case 'ENOTDIR':
-        throw new Error(`Parameter --output "${outputDir}" is file`);
+        throw new Error(`"${outputDir}" is file`);
       case 'ENOENT':
         throw new Error(`Output directory "${outputDir}" not exists`);
+      case 'EACCES':
+        throw new Error(`Access "${outputDir}" denied. Check your permissions`);
       default:
         throw error;
     }
