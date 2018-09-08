@@ -98,16 +98,22 @@ describe('Error messages tests', () => {
     });
   });
 
-  test('Fail when URL is not valid', async () => {
-    const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
-    await expect(pageLoader('.', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
-    await expect(pageLoader('/addr', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
-    await expect(pageLoader('ftp://localhost.ru', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
-  });
+  describe('Page load errors', () => {
+    test('Fail when URL is not valid', async () => {
+      const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      await expect(pageLoader('.', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('/addr', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('ftp://localhost.ru', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
+    });
 
-  test('Fail on http-response status not equal 200', async () => {
-    const pathname = '/fail';
-    nock(host).get(pathname).reply(404);
-    await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios)).rejects.toThrowErrorMatchingSnapshot();
+    test('Fail on http-response status not equal 200', async () => {
+      const pathname = '/fail';
+      nock(host).get(pathname).reply(404);
+      await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios)).rejects.toThrowErrorMatchingSnapshot();
+    });
+
+    test('Fail when no response from server', async () => {
+      await expect(pageLoader('http://impossible.local', os.tmpdir(), axios)).rejects.toThrowErrorMatchingSnapshot();
+    });
   });
 });

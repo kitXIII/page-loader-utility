@@ -52,20 +52,26 @@ const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`)
     return null;
   });
 
+const loadPage = (uri, loader) => Promise.resolve(log(`Try to load page "${uri}"`))
+  .then(() => loader.get(uri, { validateStatus: status => status === 200, timeout: 3000 }))
+  .catch((error) => {
+    const { host } = url.parse(uri);
+    if (error.response) {
+      throw new Error(`Server ${host} responded with a status code ${error.response.status}`);
+    } else if (error.request) {
+      throw new Error(`No respons was received from ${host}`);
+    }
+    throw error;
+  })
+  .then((response) => {
+    log(`Page ${response.status} loaded`);
+    return response.data;
+  });
+
 export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
-  .then(() => {
-    log(`Try to load page ${uri}`);
-    return loader.get(uri);
-  })
-  .then((response) => {
-    log(`Response status: ${response.status}`);
-    if (response.status !== 200) {
-      throw new Error(`Server response status was expected 200 but ${response.status} received`);
-    }
-    return response.data;
-  })
+  .then(() => loadPage(uri, loader))
   .then((page) => {
     const resourcesPath = path.join(outputDir, getNameByUrl(uri, '_files'));
     return loadResources(uri, resourcesPath, page, loader);

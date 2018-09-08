@@ -1,9 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Error messages tests Fail on http-response status not equal 200 1`] = `"Request failed with status code 404"`;
+exports[`Error messages tests Page load errors Fail on http-response status not equal 200 1`] = `"Server localhost responded with a status code 404"`;
 
-exports[`Error messages tests Fail when URL is not valid 1`] = `"URL \\".\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail when URL is not valid 1`] = `"URL \\".\\" is not valid"`;
 
-exports[`Error messages tests Fail when URL is not valid 2`] = `"URL \\"/addr\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail when URL is not valid 2`] = `"URL \\"/addr\\" is not valid"`;
 
-exports[`Error messages tests Fail when URL is not valid 3`] = `"URL \\"ftp://localhost.ru\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail when URL is not valid 3`] = `"URL \\"ftp://localhost.ru\\" is not valid"`;
+
+exports[`Error messages tests Page load errors Fail when no response from server 1`] = `"No respons was received from impossible.local"`;
