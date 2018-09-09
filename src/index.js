@@ -86,6 +86,7 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
   })
   .then(() => {
     log('SUCCESS');
+    console.log('\nPage was downloaded');
     return null;
   })
   .catch((error) => {

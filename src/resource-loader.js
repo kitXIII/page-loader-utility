@@ -4,8 +4,9 @@ import url from 'url';
 import cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
-
+import Listr from 'listr';
 import customWriteFile from './util';
+
 
 const log = debug('page-loader:load_resources');
 
@@ -102,7 +103,7 @@ const loadResource = (uri, link, outputPath, loader) => {
     })
     .then(() => {
       log(`Resource ${pathname} was saved localy`);
-      return link;
+      return null;
     });
 };
 
@@ -118,15 +119,16 @@ export default (uri, outputPath, page, loader) => {
     return page;
   }
 
-  const handlers = [
-    makeDir(outputPath),
-    Promise.all(links.map(link => loadResource(uri, link, outputPath, loader))),
-  ];
+  const tasks = new Listr(links.map(link => ({
+    title: `${url.resolve(uri, link.pathname)}`,
+    task: () => loadResource(uri, link, outputPath, loader),
+  })));
 
-  return Promise.all(handlers)
-    .then(([, loadedLinks]) => {
+  return makeDir(outputPath)
+    .then(() => tasks.run())
+    .then(() => {
       log('Begin to change local resources links');
-      const changedPage = changeLocalResourcesLinks(page, loadedLinks, outputPath);
+      const changedPage = changeLocalResourcesLinks(page, links, outputPath);
       log(`Links to resources of page ${uri} was changed`);
       log('SUCCESS');
       return changedPage;
