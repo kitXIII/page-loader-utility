@@ -32,15 +32,15 @@ To specify output dir, use --output option:
 ## Example
 
 
-[asciinema](https://asciinema.org/a/200196)
+Example install and use [asciinema](https://asciinema.org/a/200349)
 
 
-##Debugging
+## Debugging
 
 
 Page-loader uses debug, so just run with environmental variable DEBUG set to page-loader:*
 
-$ DEBUG="page-loader*" node -- dist/bin/page-loader.js --output some_dir http://www.someresouce.example
+$ DEBUG="page-loader*" page-loader.js --output some_dir http://www.someresouce.example
 
 
 ### Example debug output
