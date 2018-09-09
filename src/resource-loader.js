@@ -107,7 +107,18 @@ const loadResource = (uri, link, outputPath, loader) => {
     });
 };
 
-export default (uri, outputPath, page, loader) => {
+const listrLoadPromiseAll = (uri, links, outputPath, loader) => {
+  const tasks = new Listr(links.map(link => ({
+    title: `${url.resolve(uri, link.pathname)}`,
+    task: () => loadResource(uri, link, outputPath, loader),
+  })));
+  return () => tasks.run();
+};
+
+const loadPromiseAll = (uri, links, outputPath, loader) => () => Promise.all(links
+  .map(link => loadResource(uri, link, outputPath, loader)));
+
+export default (uri, outputPath, page, loader, useListr) => {
   log(`Try to load resources of page ${uri}`);
   log('Try to get local resources links');
   const links = getLocalResoucesLinks(page);
@@ -119,13 +130,12 @@ export default (uri, outputPath, page, loader) => {
     return page;
   }
 
-  const tasks = new Listr(links.map(link => ({
-    title: `${url.resolve(uri, link.pathname)}`,
-    task: () => loadResource(uri, link, outputPath, loader),
-  })));
+  const linksLoaderPromiseMaker = useListr
+    ? listrLoadPromiseAll(uri, links, outputPath, loader)
+    : loadPromiseAll(uri, links, outputPath, loader);
 
   return makeDir(outputPath)
-    .then(() => tasks.run())
+    .then(linksLoaderPromiseMaker)
     .then(() => {
       log('Begin to change local resources links');
       const changedPage = changeLocalResourcesLinks(page, links, outputPath);

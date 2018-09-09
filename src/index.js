@@ -72,13 +72,13 @@ const loadPage = (uri, loader) => Promise.resolve(log(`Try to load page "${uri}"
     return response.data;
   });
 
-export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run check input parameters'))
+export default (uri, outputDir, loader = axios, useListr = true) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
   .then(() => loadPage(uri, loader))
   .then((page) => {
     const resourcesPath = path.join(outputDir, getNameByUrl(uri, '_files'));
-    return loadResources(uri, resourcesPath, page, loader);
+    return loadResources(uri, resourcesPath, page, loader, useListr);
   })
   .then((processedPage) => {
     const pageFilePath = path.join(outputDir, getNameByUrl(uri, '.html'));
@@ -86,8 +86,7 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
   })
   .then(() => {
     log('SUCCESS');
-    console.log('\nPage was downloaded');
-    return null;
+    return getNameByUrl(uri, '.html');
   })
   .catch((error) => {
     errorlog(`FAIL with error: ${error.message}`);

@@ -16,8 +16,9 @@ program
     log('application start!');
     const { output } = options;
     pageLoad(url, output)
-      .then(() => {
+      .then((pageFileName) => {
         log('application has successfully completed!');
+        console.log(`\nPage was downloaded as ${pageFileName}`);
       }, (error) => {
         console.error(error.message);
         log('application error');
