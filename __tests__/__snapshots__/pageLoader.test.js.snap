@@ -8,4 +8,6 @@ exports[`Error messages tests Page load errors Fail when URL is not valid 2`] = 
 
 exports[`Error messages tests Page load errors Fail when URL is not valid 3`] = `"URL \\"ftp://localhost.ru\\" is not valid"`;
 
-exports[`Error messages tests Page load errors Fail when no response from server 1`] = `"No respons was received from impossible.local"`;
+exports[`Error messages tests Page load errors Fail when URL is not valid 4`] = `"Can not read input URL"`;
+
+exports[`Error messages tests Page load errors Fail when no response from server 1`] = `"No respons was received from noserver.local"`;

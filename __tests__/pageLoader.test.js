@@ -74,8 +74,8 @@ describe('Download local resources', () => {
 });
 
 describe('Error messages tests', () => {
-  describe('Output directory errors', () => {
-    nock(host).get(host).reply(status, {});
+  describe('File system errors', () => {
+    nock(host).get('/').reply(status, 'Some text');
 
     test('Fail when output directory not exists', async () => {
       const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
@@ -87,7 +87,7 @@ describe('Error messages tests', () => {
     test('Fail when output is file', async () => {
       const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
       const output = path.resolve(tmpDir, 'file');
-      await fsPromises.writeFile(output, 'Word', { flag: 'a+' });
+      await fsPromises.writeFile(output, 'Word', 'utf8');
       await expect(pageLoader(`${host}`, output, axios)).rejects.toThrowError(`"${output}" is file`);
     });
 
@@ -95,6 +95,13 @@ describe('Error messages tests', () => {
       const output = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
       await fsPromises.chmod(output, 0o555);
       await expect(pageLoader(`${host}`, output, axios)).rejects.toThrowError(`Access to "${output}" denied. Check your permissions`);
+    });
+
+    test('Fail when output file already exists', async () => {
+      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      const output = path.join(tmpDir, 'localhost.html');
+      await fsPromises.writeFile(output, 'Word', 'utf8');
+      await expect(pageLoader(`${host}`, tmpDir, axios)).rejects.toThrowError(`Output "${output}" aready exists`);
     });
   });
 
@@ -104,6 +111,7 @@ describe('Error messages tests', () => {
       await expect(pageLoader('.', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
       await expect(pageLoader('/addr', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
       await expect(pageLoader('ftp://localhost.ru', outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader({}, outputPath, axios)).rejects.toThrowErrorMatchingSnapshot();
     });
 
     test('Fail on http-response status not equal 200', async () => {
@@ -113,7 +121,7 @@ describe('Error messages tests', () => {
     });
 
     test('Fail when no response from server', async () => {
-      await expect(pageLoader('http://impossible.local', os.tmpdir(), axios)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('http://noServer.local', os.tmpdir(), axios)).rejects.toThrowErrorMatchingSnapshot();
     });
   });
 });

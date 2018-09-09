@@ -20,7 +20,10 @@ const getNameByUrl = (uri, postfix) => {
 };
 
 const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
-  .then(() => url.parse(uri))
+  .then(() => {
+    log(`Try to parce url string "${uri}"`);
+    return url.parse(uri);
+  })
   .catch(() => {
     throw new Error('Can not read input URL');
   })
@@ -68,6 +71,20 @@ const loadPage = (uri, loader) => Promise.resolve(log(`Try to load page "${uri}"
     return response.data;
   });
 
+const saveFile = (output, data) => Promise.resolve(log(`Try get info about ${output}`))
+  .then(() => fsPromises.stat(output))
+  .then(() => {
+    log(`Got stats of ${output}, but expect no stats`);
+    throw new Error(`Output "${output}" aready exists`);
+  })
+  .catch((error) => {
+    if (error.code === 'ENOENT') {
+      log(`Path ${output} is empty, try to save file`);
+      return fsPromises.writeFile(output, data, 'utf8');
+    }
+    throw error;
+  });
+
 export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
@@ -78,8 +95,7 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
   })
   .then((processedPage) => {
     const pageFilePath = path.join(outputDir, getNameByUrl(uri, '.html'));
-    log(`Try to save page to ${pageFilePath}`);
-    return fsPromises.writeFile(pageFilePath, processedPage, 'utf8');
+    return saveFile(pageFilePath, processedPage);
   })
   .then(() => {
     log('SUCCESS');
