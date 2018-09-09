@@ -5,6 +5,8 @@ import cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
 
+import customWriteFile from './util';
+
 const log = debug('page-loader:load_resources');
 
 const getNameByPathname = (pathname) => {
@@ -18,7 +20,7 @@ const tags = [
     tag: 'script',
     srcAttr: 'src',
     responseType: 'text',
-    writeFileProcess: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
+    writeFileProcess: (data, filePath) => customWriteFile(filePath, data, 'utf8'),
   },
   {
     tag: 'img',
@@ -26,14 +28,14 @@ const tags = [
     responseType: 'arraybuffer',
     writeFileProcess: (data, filePath) => {
       const binaryData = Buffer.from(data);
-      return fsPromises.writeFile(filePath, binaryData);
+      return customWriteFile(filePath, binaryData);
     },
   },
   {
     tag: 'link',
     srcAttr: 'href',
     responseType: 'text',
-    writeFileProcess: (data, filePath) => fsPromises.writeFile(filePath, data, 'utf8'),
+    writeFileProcess: (data, filePath) => customWriteFile(filePath, data, 'utf8'),
   },
 ];
 
@@ -78,7 +80,17 @@ const loadResource = (uri, link, outputPath, loader) => {
   const { tag, pathname } = link;
   const { responseType, writeFileProcess } = getTagObject(tag);
   log(`Try to load resource ${pathname}`);
-  return loader.get(url.resolve(uri, pathname), { responseType })
+  const currentUri = url.resolve(uri, pathname);
+  return loader.get(currentUri, { responseType })
+    .catch((error) => {
+      const { host } = url.parse(uri);
+      if (error.response) {
+        throw new Error(`On load ${currentUri} server ${host} responded with a status code ${error.response.status}`);
+      } else if (error.request) {
+        throw new Error(`On load ${currentUri} no respons was received from ${host}`);
+      }
+      throw error;
+    })
     .then((response) => {
       log(`Response status: ${response.status}`);
       return response.data;
@@ -86,7 +98,7 @@ const loadResource = (uri, link, outputPath, loader) => {
     .then((data) => {
       const filePath = path.resolve(outputPath, getNameByPathname(pathname));
       log(`Try to save received resource to ${filePath}`);
-      return writeFileProcess(data, filePath);
+      return writeFileProcess(data, filePath, pathname);
     })
     .then(() => {
       log(`Resource ${pathname} was saved localy`);

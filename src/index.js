@@ -4,6 +4,7 @@ import path from 'path';
 import url from 'url';
 import _ from 'lodash';
 import debug from 'debug';
+import customWriteFile from './util';
 
 import loadResources from './resource-loader';
 
@@ -71,20 +72,6 @@ const loadPage = (uri, loader) => Promise.resolve(log(`Try to load page "${uri}"
     return response.data;
   });
 
-const saveFile = (output, data) => Promise.resolve(log(`Try get info about ${output}`))
-  .then(() => fsPromises.stat(output))
-  .then(() => {
-    log(`Got stats of ${output}, but expect no stats`);
-    throw new Error(`Output "${output}" aready exists`);
-  })
-  .catch((error) => {
-    if (error.code === 'ENOENT') {
-      log(`Path ${output} is empty, try to save file`);
-      return fsPromises.writeFile(output, data, 'utf8');
-    }
-    throw error;
-  });
-
 export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
@@ -95,7 +82,7 @@ export default (uri, outputDir, loader = axios) => Promise.resolve(log('Run chec
   })
   .then((processedPage) => {
     const pageFilePath = path.join(outputDir, getNameByUrl(uri, '.html'));
-    return saveFile(pageFilePath, processedPage);
+    return customWriteFile(pageFilePath, processedPage, 'utf8');
   })
   .then(() => {
     log('SUCCESS');

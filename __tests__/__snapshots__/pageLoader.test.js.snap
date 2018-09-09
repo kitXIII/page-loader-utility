@@ -2,12 +2,16 @@
 
 exports[`Error messages tests Page load errors Fail on http-response status not equal 200 1`] = `"Server localhost responded with a status code 404"`;
 
-exports[`Error messages tests Page load errors Fail when URL is not valid 1`] = `"URL \\".\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail with friendly message when URL is not valid 1`] = `"URL \\".\\" is not valid"`;
 
-exports[`Error messages tests Page load errors Fail when URL is not valid 2`] = `"URL \\"/addr\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail with friendly message when URL is not valid 2`] = `"URL \\"/addr\\" is not valid"`;
 
-exports[`Error messages tests Page load errors Fail when URL is not valid 3`] = `"URL \\"ftp://localhost.ru\\" is not valid"`;
+exports[`Error messages tests Page load errors Fail with friendly message when URL is not valid 3`] = `"URL \\"ftp://localhost.ru\\" is not valid"`;
 
-exports[`Error messages tests Page load errors Fail when URL is not valid 4`] = `"Can not read input URL"`;
+exports[`Error messages tests Page load errors Fail with friendly message when URL is not valid 4`] = `"Can not read input URL"`;
 
-exports[`Error messages tests Page load errors Fail when no response from server 1`] = `"No respons was received from noserver.local"`;
+exports[`Error messages tests Page load errors Fail with friendly message when no response from server 1`] = `"No respons was received from noserver.local"`;
+
+exports[`Error messages tests Resources load errors Fail with friendly message when the server responds about the inaccessibility of one of the resources 1`] = `"On load http://localhost/assets/imgs/logo.png server localhost responded with a status code 403"`;
+
+exports[`Error messages tests Resources load errors Fail with friendly message when there is no server response when loading one of the resources 1`] = `"On load http://localhost/assets/imgs/logo.png no respons was received from localhost"`;
