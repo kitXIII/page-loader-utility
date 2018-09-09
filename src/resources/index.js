@@ -118,9 +118,10 @@ export default (uri, outputPath, page, loader, useListr) => {
     return page;
   }
   const processedLinks = links.map(link => ({ ...link, uri: url.resolve(uri, link.pathname) }));
+  log(`Use listr: ${useListr}`);
   const batchLoad = getBatchLoader(useListr);
   return makeDir(outputPath)
-    .then(batchLoad(processedLinks, loadResource, outputPath, loader))
+    .then(() => batchLoad(processedLinks, loadResource, outputPath, loader))
     .then(() => {
       const changedPage = changeLocalResourcesLinks(page, links, outputPath);
       log(`Links to resources of page ${uri} was changed`);
