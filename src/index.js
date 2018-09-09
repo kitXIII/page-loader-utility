@@ -6,7 +6,7 @@ import _ from 'lodash';
 import debug from 'debug';
 import customWriteFile from './util';
 
-import loadResources from './resource-loader';
+import loadResources from './resources';
 
 const { promises: fsPromises } = fs;
 
