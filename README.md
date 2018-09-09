@@ -32,10 +32,7 @@ To specify output dir, use --output option:
 ## Example
 
 
-Example install and use [asciinema](https://asciinema.org/a/200349)
-
-Example with listr [asciinema](https://asciinema.org/a/200376)
-
+Example install and use [asciinema](https://asciinema.org/a/200380)
 
 
 ## Debugging
