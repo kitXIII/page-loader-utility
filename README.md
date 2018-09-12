@@ -41,4 +41,4 @@ Example of installation and usage
 
 Page-loader uses debug, so just run with environmental variable DEBUG set to page-loader:*
 
-$ DEBUG="page-loader*" page-loader.js --output some_dir http://www.someresouce.example
+`$ DEBUG="page-loader*" page-loader.js --output some_dir http://www.someresouce.example`
