@@ -4,7 +4,7 @@ import url from 'url';
 import cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
-import customWriteFile from '../util';
+import { customWriteFile, customLoadResource } from '../util';
 
 import getBatchLoader from './batch-loader';
 
@@ -16,35 +16,12 @@ const getNameByPathname = (pathname) => {
   return _.concat(dirParts, base).join('-');
 };
 
-const tags = [
-  {
-    tag: 'script',
-    srcAttr: 'src',
-    responseType: 'text',
-    writeFileProcess: (data, filePath) => customWriteFile(filePath, data, 'utf8'),
-  },
-  {
-    tag: 'img',
-    srcAttr: 'src',
-    responseType: 'arraybuffer',
-    writeFileProcess: (data, filePath) => {
-      const binaryData = Buffer.from(data);
-      return customWriteFile(filePath, binaryData);
-    },
-  },
-  {
-    tag: 'link',
-    srcAttr: 'href',
-    responseType: 'text',
-    writeFileProcess: (data, filePath) => customWriteFile(filePath, data, 'utf8'),
-  },
-];
-
-const getTagObject = tag => tags.find(item => tag === item.tag);
+const attributes = { script: 'src', img: 'src', link: 'href' };
 
 const getLocalResoucesLinks = (page) => {
   const $ = cheerio.load(page);
-  const result = tags.map(({ tag, srcAttr }) => {
+  const result = _.keys(attributes).map((tag) => {
+    const srcAttr = attributes[tag];
     const collection = $(tag).map((i, elem) => $(elem).attr(srcAttr));
     const links = Array.from(collection).filter(link => !url.parse(link).host);
     const resultLinks = _.uniq(links);
@@ -56,18 +33,18 @@ const getLocalResoucesLinks = (page) => {
 const changeLocalResourcesLinks = (page, links, outputPath) => {
   const $ = cheerio.load(page);
   links.forEach(({ pathname, tag }) => {
-    const { srcAttr } = getTagObject(tag);
+    const srcAttr = attributes[tag];
     const newPath = path.join(path.basename(outputPath), getNameByPathname(pathname));
     return $(`${tag}[${srcAttr} = "${pathname}"]`).attr(srcAttr, newPath);
   });
   return $.html();
 };
 
-const makeDir = dirPath => Promise.resolve(log(`Check if dir exists ${dirPath}`))
+const makeDir = dirPath => Promise.resolve(log(`Check existence of the directory: ${dirPath}`))
   .then(() => fsPromises.readdir(dirPath))
   .catch((error) => {
     if (error.code === 'ENOENT') {
-      log(`It is empty path, try make directory ${dirPath}`);
+      log(`It is empty path, try make directory: ${dirPath}`);
       return fsPromises.mkdir(dirPath);
     }
     throw error;
@@ -77,54 +54,64 @@ const makeDir = dirPath => Promise.resolve(log(`Check if dir exists ${dirPath}`)
     return null;
   });
 
-const loadResource = (link, outputPath, loader) => {
-  const { tag, pathname, uri } = link;
-  const { responseType, writeFileProcess } = getTagObject(tag);
-  log(`Try to load resource ${pathname}`);
-  return loader.get(uri, { responseType })
-    .catch((error) => {
-      const { host } = url.parse(uri);
-      if (error.response) {
-        throw new Error(`On load ${uri} server ${host} responded with a status code ${error.response.status}`);
-      } else if (error.request) {
-        throw new Error(`On load ${uri} no respons was received from ${host}`);
-      }
-      throw error;
-    })
-    .then((response) => {
-      log(`Response status: ${response.status}`);
-      return response.data;
-    })
+
+const getlinkLoaders = loader => ({
+  script: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+    validateStatus: status => status === 200,
+  })
+    .then(data => customWriteFile(fileSavePath, data, 'utf8')),
+
+  link: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+    validateStatus: status => status === 200,
+  })
+    .then(data => customWriteFile(fileSavePath, data, 'utf8')),
+
+  img: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+    validateStatus: status => status === 200,
+    responseType: 'arraybuffer',
+  })
     .then((data) => {
-      const filePath = path.resolve(outputPath, getNameByPathname(pathname));
-      log(`Try to save received resource to ${filePath}`);
-      return writeFileProcess(data, filePath, pathname);
-    })
-    .then(() => {
-      log(`Resource ${pathname} was saved localy`);
-      return null;
-    });
-};
+      const binaryData = Buffer.from(data);
+      return customWriteFile(fileSavePath, binaryData);
+    }),
+});
 
 export default (uri, outputPath, page, loader, useListr) => {
-  log(`Try to load resources of page ${uri}`);
   log('Try to get local resources links');
   const links = getLocalResoucesLinks(page);
   const count = links.length;
   log(`Links to resources are received in quantity: ${count}`);
-
   if (count === 0) {
     log('No resources to download');
     return page;
   }
-  const processedLinks = links.map(link => ({ ...link, uri: url.resolve(uri, link.pathname) }));
+
+  const linkLoaders = getlinkLoaders(loader);
   log(`Use listr: ${useListr}`);
   const batchLoad = getBatchLoader(useListr);
+
+  const preparedHandlers = links.map(({ tag, pathname }) => {
+    const linkUri = url.resolve(uri, pathname);
+    log(`Prepare loaders: uri ${linkUri}`);
+    const filePath = path.resolve(outputPath, getNameByPathname(pathname));
+    log(`Prepare loaders: path ${filePath}`);
+    return {
+      uri: linkUri,
+      path: filePath,
+      handler: linkLoaders[tag],
+    };
+  });
+
   return makeDir(outputPath)
-    .then(() => batchLoad(processedLinks, loadResource, outputPath, loader))
     .then(() => {
+      log(`Run batch load resources of page ${uri}`);
+      return batchLoad(preparedHandlers);
+    })
+    .then(() => {
+      log('Successful batch pprocessing of resources');
+      log('Try to change links on page');
       const changedPage = changeLocalResourcesLinks(page, links, outputPath);
-      log(`Links to resources of page ${uri} was changed`);
+      log(`Links on page ${uri} was changed`);
       log('SUCCESS');
       return changedPage;
     });

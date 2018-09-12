@@ -32,7 +32,7 @@ To specify output dir, use --output option:
 ## Example
 
 
-Example install and use [asciinema](https://asciinema.org/a/200426)
+Example install and use [![asciicast](https://asciinema.org/a/200426.png)](https://asciinema.org/a/200426?speed=2&size=medium)
 
 
 ## Debugging
@@ -41,9 +41,3 @@ Example install and use [asciinema](https://asciinema.org/a/200426)
 Page-loader uses debug, so just run with environmental variable DEBUG set to page-loader:*
 
 $ DEBUG="page-loader*" page-loader.js --output some_dir http://www.someresouce.example
-
-
-### Example debug output
-
-
-[asciinema](https://asciinema.org/a/200191)

@@ -4,7 +4,7 @@ import path from 'path';
 import url from 'url';
 import _ from 'lodash';
 import debug from 'debug';
-import customWriteFile from './util';
+import { customWriteFile, customLoadResource } from './util';
 
 import loadResources from './resources';
 
@@ -20,9 +20,9 @@ const getNameByUrl = (uri, postfix) => {
   return `${_.concat(hostParts, pathParts).join('-')}${postfix}`;
 };
 
-const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
+const validateUrl = uri => Promise.resolve(log(`Try to validate URL ${uri}`))
   .then(() => {
-    log(`Try to parce url string "${uri}"`);
+    log(`Try to parce url string ${uri}`);
     return url.parse(uri);
   })
   .catch(() => {
@@ -32,11 +32,11 @@ const validateUrl = uri => Promise.resolve(log(`Try to validate URL "${uri}"`))
     if ((protocol !== 'http:' && protocol !== 'https:') || !host) {
       throw new Error(`URL "${uri}" is not valid`);
     }
-    log(`URL "${uri}" is valid`);
+    log(`URL ${uri} is valid`);
     return true;
   });
 
-const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`))
+const checkDir = outputDir => Promise.resolve(log(`Check existence of the path: ${outputDir}`))
   .then(() => fsPromises.access(outputDir, fs.constants.W_OK))
   .then(() => fsPromises.readdir(outputDir))
   .catch((error) => {
@@ -52,30 +52,17 @@ const checkDir = outputDir => Promise.resolve(log(`Try to check "${outputDir}"`)
     }
   })
   .then(() => {
-    log(`"${outputDir}" checked: OK`);
+    log(`${outputDir} checked: OK`);
     return null;
-  });
-
-const loadPage = (uri, loader) => Promise.resolve(log(`Try to load page "${uri}"`))
-  .then(() => loader.get(uri, { validateStatus: status => status === 200, timeout: 3000 }))
-  .catch((error) => {
-    const { host } = url.parse(uri);
-    if (error.response) {
-      throw new Error(`Server ${host} responded with a status code ${error.response.status}`);
-    } else if (error.request) {
-      throw new Error(`No respons was received from ${host}`);
-    }
-    throw error;
-  })
-  .then((response) => {
-    log(`Page ${response.status} loaded`);
-    return response.data;
   });
 
 export default (uri, outputDir, loader = axios, useListr = true) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
-  .then(() => loadPage(uri, loader))
+  .then(() => customLoadResource(uri, loader, {
+    validateStatus: status => status === 200,
+    timeout: 3000,
+  }))
   .then((page) => {
     const resourcesPath = path.join(outputDir, getNameByUrl(uri, '_files'));
     return loadResources(uri, resourcesPath, page, loader, useListr);

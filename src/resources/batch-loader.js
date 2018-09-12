@@ -1,16 +1,15 @@
 import Listr from 'listr';
 
-const listrBatchLoader = (links, oneLinkLoader, ...args) => {
-  const tasks = new Listr(links.map(link => ({
-    title: `${link.uri}`,
-    task: () => oneLinkLoader(link, ...args),
+const listrBatchLoad = (preparedHandlers) => {
+  const tasks = new Listr(preparedHandlers.map(({ uri, path, handler }) => ({
+    title: uri,
+    task: () => handler(uri, path),
   })), { concurrent: true });
 
   return tasks.run();
 };
 
-const promiseAllBatchLoader = (links, oneLinkLoader, ...args) => Promise.all(links
-  .map(link => oneLinkLoader(link, ...args)));
+const promiseAllBatchLoad = preparedHandlers => Promise.all(preparedHandlers
+  .map(({ uri, path, handler }) => handler(uri, path)));
 
-
-export default useListr => (useListr ? listrBatchLoader : promiseAllBatchLoader);
+export default useListr => (useListr ? listrBatchLoad : promiseAllBatchLoad);
