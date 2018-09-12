@@ -32,7 +32,8 @@ To specify output dir, use --output option:
 ## Example
 
 
-Example install and use [![asciicast](https://asciinema.org/a/200426.png)](https://asciinema.org/a/200426?speed=2&size=medium)
+Example of installation and usage
+[![asciicast](https://asciinema.org/a/200426.png)](https://asciinema.org/a/200426?speed=2&autoplay=1&loop=1)
 
 
 ## Debugging
