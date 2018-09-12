@@ -6,11 +6,12 @@ import { version } from '../../package.json';
 import pageLoad from '..';
 
 const log = debug('page-loader');
+const currentDir = process.cwd();
 
 program
   .version(version)
   .description('Downloads a page from the network and puts it in the specified folder')
-  .option('-o, --output [path]', 'path to save the downloaded page', process.cwd())
+  .option('-o, --output [path]', 'path to save the downloaded page', currentDir)
   .arguments('<url>')
   .action((url, options) => {
     log('application start!');

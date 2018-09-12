@@ -55,7 +55,7 @@ const makeDir = dirPath => Promise.resolve(log(`Check existence of the directory
   });
 
 
-const getlinkLoaders = loader => ({
+const getlinkProcess = loader => ({
   script: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
     validateStatus: status => status === 200,
   })
@@ -86,26 +86,20 @@ export default (uri, outputPath, page, loader, useListr) => {
     return page;
   }
 
-  const linkLoaders = getlinkLoaders(loader);
+  const linkProcess = getlinkProcess(loader);
   log(`Use listr: ${useListr}`);
   const batchLoad = getBatchLoader(useListr);
 
-  const preparedHandlers = links.map(({ tag, pathname }) => {
-    const linkUri = url.resolve(uri, pathname);
-    log(`Prepare loaders: uri ${linkUri}`);
-    const filePath = path.resolve(outputPath, getNameByPathname(pathname));
-    log(`Prepare loaders: path ${filePath}`);
-    return {
-      uri: linkUri,
-      path: filePath,
-      handler: linkLoaders[tag],
-    };
-  });
+  const preparedLinks = links.map(({ tag, pathname }) => ({
+    uri: url.resolve(uri, pathname),
+    path: path.resolve(outputPath, getNameByPathname(pathname)),
+    process: linkProcess[tag],
+  }));
 
   return makeDir(outputPath)
     .then(() => {
       log(`Run batch load resources of page ${uri}`);
-      return batchLoad(preparedHandlers);
+      return batchLoad(preparedLinks);
     })
     .then(() => {
       log('Successful batch pprocessing of resources');
