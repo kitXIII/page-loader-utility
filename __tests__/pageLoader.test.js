@@ -2,6 +2,7 @@ import nock from 'nock';
 import os from 'os';
 import path from 'path';
 import { promises as fsPromises } from 'fs';
+import rimraf from 'rimraf';
 import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http';
 
@@ -11,32 +12,45 @@ axios.defaults.adapter = httpAdapter;
 
 const host = 'http://localhost';
 const status = 200;
-const bodySimpleFilePath = path.resolve(__dirname, '__fixtures__/simple.html');
 const bodyFilePath = path.resolve(__dirname, '__fixtures__/index.html');
+
+let tmpDir = os.tmpdir();
+let body = 'body';
+
+beforeAll(async () => {
+  tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+  body = await fsPromises.readFile(bodyFilePath, 'utf8');
+});
+
+afterAll(() => {
+  rimraf(tmpDir, (err) => {
+    if (err) {
+      console.errror(err.message);
+    }
+  });
+});
 
 describe('Page load tests', () => {
   test('Download page without resources and write it to file', async () => {
-    const pathname = '/page';
-    const body = await fsPromises.readFile(bodySimpleFilePath, 'utf8');
-    const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+    const pathname = '/simple';
+    const simpleBody = '<h1>Header</h1>';
 
-    nock(host).get(pathname).reply(status, body);
+    nock(host).get(pathname).reply(status, simpleBody);
+
     await pageLoader(`${host}${pathname}`, tmpDir, axios, false);
-    const receivedData = await fsPromises.readFile(path.join(tmpDir, 'localhost-page.html'), 'utf8');
-    return expect(receivedData).toBe(body);
+    const recivedSimpleBody = await fsPromises.readFile(path.join(tmpDir, 'localhost-simple.html'), 'utf8');
+    return expect(recivedSimpleBody).toBe(simpleBody);
   });
 
   test('Download page with resources', async () => {
+    const pathname = '/page/with/links';
     const cssFilePath = path.resolve(__dirname, '__fixtures__/base.css');
     const jsFilePath = path.resolve(__dirname, '__fixtures__/main.js');
     const imgFilePath = path.resolve(__dirname, '__fixtures__/logo.png');
 
-    const pathname = '/page/with/links';
-    const body = await fsPromises.readFile(bodyFilePath, 'utf8');
     const css = await fsPromises.readFile(cssFilePath, 'utf8');
     const js = await fsPromises.readFile(jsFilePath, 'utf8');
     const img = await fsPromises.readFile(imgFilePath);
-    const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
 
     nock(host).get(pathname).reply(status, body);
     nock(host).get('/assets/css/base.css').reply(status, css);
@@ -76,27 +90,25 @@ describe('Error messages tests', () => {
     nock(host).get(pathname).reply(status, 'Some text');
 
     test('Fail with friendly message when output directory not exists', async () => {
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
       const output = path.resolve(tmpDir, 'nodirectory');
       await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`Output directory "${output}" not exists`);
       await expect(fsPromises.readdir(tmpDir)).resolves.not.toContain('nodirectory');
     });
 
     test('Fail with friendly message when output is file', async () => {
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
-      const output = path.resolve(tmpDir, 'file');
+      const output = path.resolve(tmpDir, 'someFile');
       await fsPromises.writeFile(output, 'Word', 'utf8');
       await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`"${output}" is file`);
     });
 
     test('Fail with friendly message when no access to output directory', async () => {
-      const output = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      const output = path.resolve(tmpDir, 'noAccessDir');
+      await fsPromises.mkdir(output);
       await fsPromises.chmod(output, 0o555);
       await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`Access to "${output}" denied. Check your permissions`);
     });
 
     test('Fail with friendly message when output file already exists', async () => {
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
       const output = path.join(tmpDir, 'localhost-fsErrors.html');
       await fsPromises.writeFile(output, 'Word', 'utf8');
       await expect(pageLoader(`${host}${pathname}`, tmpDir, axios, false)).rejects.toThrowError(`Output "${output}" aready exists`);
@@ -105,7 +117,8 @@ describe('Error messages tests', () => {
 
   describe('Page load errors', () => {
     test('Fail with friendly message when URL is not valid', async () => {
-      const outputPath = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
+      const outputPath = path.resolve(tmpDir, 'noValidUrl');
+      await fsPromises.mkdir(outputPath);
       await expect(pageLoader('.', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
       await expect(pageLoader('/addr', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
       await expect(pageLoader('ftp://localhost.ru', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
@@ -126,8 +139,6 @@ describe('Error messages tests', () => {
   describe('Resources load errors', () => {
     test('Fail with friendly message when server responds about the inaccessibility of one of the resources', async () => {
       const pathname = '/page/with/problem_links1';
-      const body = await fsPromises.readFile(bodyFilePath, 'utf8');
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
 
       nock(host).get(pathname).reply(status, body);
       nock(host).get('/assets/css/base.css').reply(status, 'css');
@@ -139,8 +150,6 @@ describe('Error messages tests', () => {
 
     test('Fail with friendly message when there is no server response when loading one of the resources', async () => {
       const pathname = '/page/with/problem_links2';
-      const body = await fsPromises.readFile(bodyFilePath, 'utf8');
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
 
       nock(host).get(pathname).reply(status, body);
       nock(host).get('/assets/css/base.css').reply(status, 'css');
@@ -150,9 +159,7 @@ describe('Error messages tests', () => {
     });
 
     test('Fail with friendly message when output file for resource already exists', async () => {
-      const tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'jest-test'));
       const pathname = '/page/with/problem_links3';
-      const body = await fsPromises.readFile(bodyFilePath, 'utf8');
 
       nock(host).get(pathname).reply(status, body);
       nock(host).get('/assets/css/base.css').reply(status, 'css');

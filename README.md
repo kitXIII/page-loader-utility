@@ -8,6 +8,12 @@
 Utility that downloads a page from the network and puts it in the specified folder.
 
 
+## Requirements
+
+
+Node >= 10
+
+
 ## Install
 
 
