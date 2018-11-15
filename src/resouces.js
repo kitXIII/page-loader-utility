@@ -1,20 +1,14 @@
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 import url from 'url';
 import cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
-import { customWriteFile, customLoadResource } from '../util';
-
-import getBatchLoader from './batch-loader';
+import { loadResource } from './lib/urls';
+import { writeFile, makeDir } from './lib/files';
+import { getNameByPathname } from './lib/fileNames';
+import getBatchLoader from './lib/batchLoader';
 
 const log = debug('page-loader:load_resources');
-
-const getNameByPathname = (pathname) => {
-  const { dir, base } = path.parse(pathname);
-  const dirParts = dir.split('/').filter(v => v);
-  return _.concat(dirParts, base).join('-');
-};
 
 const attributes = { script: 'src', img: 'src', link: 'href' };
 
@@ -40,39 +34,24 @@ const changeLocalResourcesLinks = (page, links, outputPath) => {
   return $.html();
 };
 
-const makeDir = dirPath => Promise.resolve(log(`Check existence of the directory: ${dirPath}`))
-  .then(() => fsPromises.readdir(dirPath))
-  .catch((error) => {
-    if (error.code === 'ENOENT') {
-      log(`It is empty path, try make directory: ${dirPath}`);
-      return fsPromises.mkdir(dirPath);
-    }
-    throw error;
-  })
-  .then(() => {
-    log(`Directory ${dirPath} was created`);
-    return null;
-  });
-
-
 const getlinksProceses = loader => ({
-  script: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+  script: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
     validateStatus: status => status === 200,
   })
-    .then(data => customWriteFile(fileSavePath, data, 'utf8')),
+    .then(data => writeFile(fileSavePath, data, 'utf8')),
 
-  link: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+  link: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
     validateStatus: status => status === 200,
   })
-    .then(data => customWriteFile(fileSavePath, data, 'utf8')),
+    .then(data => writeFile(fileSavePath, data, 'utf8')),
 
-  img: (linkUri, fileSavePath) => customLoadResource(linkUri, loader, {
+  img: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
     validateStatus: status => status === 200,
     responseType: 'arraybuffer',
   })
     .then((data) => {
       const binaryData = Buffer.from(data);
-      return customWriteFile(fileSavePath, binaryData);
+      return writeFile(fileSavePath, binaryData);
     }),
 });
 
@@ -102,11 +81,9 @@ export default (uri, outputPath, page, loader, useListr) => {
       return batchLoad(preparedLinks);
     })
     .then(() => {
-      log('Successful batch pprocessing of resources');
-      log('Try to change links on page');
+      log('Successful batch processing of resources, try to change links on page');
       const changedPage = changeLocalResourcesLinks(page, links, outputPath);
       log(`Links on page ${uri} was changed`);
-      log('SUCCESS');
       return changedPage;
     });
 };
