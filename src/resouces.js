@@ -34,18 +34,18 @@ const changeLocalResourcesLinks = (page, links, outputPath) => {
   return $.html();
 };
 
-const getlinksProceses = loader => ({
-  script: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
+const linksProceses = {
+  script: (linkUri, fileSavePath) => loadResource(linkUri, {
     validateStatus: status => status === 200,
   })
     .then(data => writeFile(fileSavePath, data, 'utf8')),
 
-  link: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
+  link: (linkUri, fileSavePath) => loadResource(linkUri, {
     validateStatus: status => status === 200,
   })
     .then(data => writeFile(fileSavePath, data, 'utf8')),
 
-  img: (linkUri, fileSavePath) => loadResource(linkUri, loader, {
+  img: (linkUri, fileSavePath) => loadResource(linkUri, {
     validateStatus: status => status === 200,
     responseType: 'arraybuffer',
   })
@@ -53,9 +53,9 @@ const getlinksProceses = loader => ({
       const binaryData = Buffer.from(data);
       return writeFile(fileSavePath, binaryData);
     }),
-});
+};
 
-export default (uri, outputPath, page, loader, useListr) => {
+export default (uri, outputPath, page, useListr) => {
   log('Try to get local resources links');
   const links = getLocalResoucesLinks(page);
   const count = links.length;
@@ -65,7 +65,6 @@ export default (uri, outputPath, page, loader, useListr) => {
     return page;
   }
 
-  const linksProceses = getlinksProceses(loader);
   log(`Use listr: ${useListr}`);
   const batchLoad = getBatchLoader(useListr);
 

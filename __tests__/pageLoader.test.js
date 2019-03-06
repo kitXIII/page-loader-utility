@@ -3,12 +3,8 @@ import os from 'os';
 import path from 'path';
 import { promises as fsPromises } from 'fs';
 import rimraf from 'rimraf';
-import axios from 'axios';
-import httpAdapter from 'axios/lib/adapters/http';
 
 import pageLoader from '../src';
-
-axios.defaults.adapter = httpAdapter;
 
 const host = 'http://localhost';
 const status = 200;
@@ -37,7 +33,7 @@ describe('Page load tests', () => {
 
     nock(host).get(pathname).reply(status, simpleBody);
 
-    await pageLoader(`${host}${pathname}`, tmpDir, axios, false);
+    await pageLoader(`${host}${pathname}`, tmpDir, false);
     const recivedSimpleBody = await fsPromises.readFile(path.join(tmpDir, 'localhost-simple.html'), 'utf8');
     return expect(recivedSimpleBody).toBe(simpleBody);
   });
@@ -57,7 +53,7 @@ describe('Page load tests', () => {
     nock(host).get('/assets/js/main.js').reply(status, js);
     nock(host).get('/assets/imgs/logo.png').reply(status, img);
 
-    await pageLoader(`${host}${pathname}`, tmpDir, axios, false);
+    await pageLoader(`${host}${pathname}`, tmpDir, false);
 
     const assetsDir = path.resolve(tmpDir, 'localhost-page-with-links_files');
     const recivedCssFilePath = path.resolve(assetsDir, 'assets-css-base.css');
@@ -91,27 +87,27 @@ describe('Error messages tests', () => {
 
     test('Fail with friendly message when output directory not exists', async () => {
       const output = path.resolve(tmpDir, 'nodirectory');
-      await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`Output directory "${output}" not exists`);
+      await expect(pageLoader(`${host}${pathname}`, output, false)).rejects.toThrowError(`Output directory "${output}" not exists`);
       await expect(fsPromises.readdir(tmpDir)).resolves.not.toContain('nodirectory');
     });
 
     test('Fail with friendly message when output is file', async () => {
       const output = path.resolve(tmpDir, 'someFile');
       await fsPromises.writeFile(output, 'Word', 'utf8');
-      await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`"${output}" is file`);
+      await expect(pageLoader(`${host}${pathname}`, output, false)).rejects.toThrowError(`"${output}" is file`);
     });
 
     test('Fail with friendly message when no access to output directory', async () => {
       const output = path.resolve(tmpDir, 'noAccessDir');
       await fsPromises.mkdir(output);
       await fsPromises.chmod(output, 0o555);
-      await expect(pageLoader(`${host}${pathname}`, output, axios, false)).rejects.toThrowError(`Access to "${output}" denied. Check your permissions`);
+      await expect(pageLoader(`${host}${pathname}`, output, false)).rejects.toThrowError(`Access to "${output}" denied. Check your permissions`);
     });
 
     test('Fail with friendly message when output file already exists', async () => {
       const output = path.join(tmpDir, 'localhost-fsErrors.html');
       await fsPromises.writeFile(output, 'Word', 'utf8');
-      await expect(pageLoader(`${host}${pathname}`, tmpDir, axios, false)).rejects.toThrowError(`Output "${output}" aready exists`);
+      await expect(pageLoader(`${host}${pathname}`, tmpDir, false)).rejects.toThrowError(`Output "${output}" aready exists`);
     });
   });
 
@@ -119,20 +115,20 @@ describe('Error messages tests', () => {
     test('Fail with friendly message when URL is not valid', async () => {
       const outputPath = path.resolve(tmpDir, 'noValidUrl');
       await fsPromises.mkdir(outputPath);
-      await expect(pageLoader('.', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
-      await expect(pageLoader('/addr', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
-      await expect(pageLoader('ftp://localhost.ru', outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
-      await expect(pageLoader({}, outputPath, axios, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('.', outputPath, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('/addr', outputPath, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('ftp://localhost.ru', outputPath, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader({}, outputPath, false)).rejects.toThrowErrorMatchingSnapshot();
     });
 
     test('Fail with friendly message when http-response status not equal 200', async () => {
       const pathname = '/fail';
       nock(host).get(pathname).reply(404);
-      await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), axios, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader(`${host}${pathname}`, os.tmpdir(), false)).rejects.toThrowErrorMatchingSnapshot();
     });
 
     test('Fail with friendly message when no response from server', async () => {
-      await expect(pageLoader('http://noServer.local', os.tmpdir(), axios, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader('http://noServer.local', os.tmpdir(), false)).rejects.toThrowErrorMatchingSnapshot();
     });
   });
 
@@ -145,7 +141,7 @@ describe('Error messages tests', () => {
       nock(host).get('/assets/js/main.js').reply(status, 'js');
       nock(host).get('/assets/imgs/logo.png').reply('403');
 
-      await expect(pageLoader(`${host}${pathname}`, tmpDir, axios, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader(`${host}${pathname}`, tmpDir, false)).rejects.toThrowErrorMatchingSnapshot();
     });
 
     test('Fail with friendly message when there is no server response when loading one of the resources', async () => {
@@ -155,7 +151,7 @@ describe('Error messages tests', () => {
       nock(host).get('/assets/css/base.css').reply(status, 'css');
       nock(host).get('/assets/js/main.js').reply(status, 'js');
 
-      await expect(pageLoader(`${host}${pathname}`, tmpDir, axios, false)).rejects.toThrowErrorMatchingSnapshot();
+      await expect(pageLoader(`${host}${pathname}`, tmpDir, false)).rejects.toThrowErrorMatchingSnapshot();
     });
 
     test('Fail with friendly message when output file for resource already exists', async () => {
@@ -169,7 +165,7 @@ describe('Error messages tests', () => {
       const output = path.join(outputDir, 'assets-imgs-logo.png');
       await fsPromises.mkdir(outputDir);
       await fsPromises.writeFile(output, 'Word', 'utf8');
-      await expect(pageLoader(`${host}${pathname}`, tmpDir, axios, false)).rejects.toThrowError(`Output "${output}" aready exists`);
+      await expect(pageLoader(`${host}${pathname}`, tmpDir, false)).rejects.toThrowError(`Output "${output}" aready exists`);
     });
   });
 });

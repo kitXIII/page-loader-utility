@@ -1,4 +1,3 @@
-import axios from 'axios';
 import path from 'path';
 import debug from 'debug';
 import { writeFile, checkDir } from './lib/files';
@@ -10,16 +9,16 @@ import loadResources from './resouces';
 const log = debug('page-loader:load_page');
 const errorlog = debug('page-loader:error');
 
-export default (uri, outputDir, loader = axios, useListr = true) => Promise.resolve(log('Run check input parameters'))
+export default (uri, outputDir, useListr = true) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
-  .then(() => loadPage(uri, loader, {
+  .then(() => loadPage(uri, {
     validateStatus: status => status === 200,
     timeout: 3000,
   }))
   .then((page) => {
     const resourcesPath = path.join(outputDir, getNameByUrl(uri, '_files'));
-    return loadResources(uri, resourcesPath, page, loader, useListr);
+    return loadResources(uri, resourcesPath, page, useListr);
   })
   .then((processedPage) => {
     const pageFilePath = path.join(outputDir, getNameByUrl(uri, '.html'));
