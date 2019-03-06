@@ -16,7 +16,7 @@ program
   .action((url, options) => {
     log('application start!');
     const { output } = options;
-    pageLoad(url, output)
+    pageLoad(url, output, true)
       .then((pageFileName) => {
         log('application has successfully completed!');
         console.log(`\nPage was downloaded as ${pageFileName}`);

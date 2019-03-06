@@ -9,7 +9,7 @@ import loadResources from './resouces';
 const log = debug('page-loader:load_page');
 const errorlog = debug('page-loader:error');
 
-export default (uri, outputDir, useListr = true) => Promise.resolve(log('Run check input parameters'))
+export default (uri, outputDir, useListr = false) => Promise.resolve(log('Run check input parameters'))
   .then(() => checkDir(outputDir))
   .then(() => validateUrl(uri))
   .then(() => loadPage(uri, {
