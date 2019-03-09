@@ -4,38 +4,36 @@ import axios from './axios';
 
 const log = debug('page-loader:lib_urls');
 
-const loadResource = (uri, options = {}) => {
+const loadResource = async (uri, options = {}) => {
   log(`Try to load resource ${uri}`);
   const { host } = url.parse(uri);
-  return axios.get(uri, options)
-    .catch((error) => {
-      if (error.response) {
-        throw new Error(`On load ${uri} server ${host} responded with a status code ${error.response.status}`);
-      } else if (error.request) {
-        throw new Error(`On load ${uri} no respons was received from ${host}`);
-      }
-      throw error;
-    })
-    .then((response) => {
-      log(`Response status: ${response.status}`);
-      return response.data;
-    });
+  try {
+    const response = await axios.get(uri, options);
+    log(`Response status: ${response.status}`);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(`On load ${uri} server ${host} responded with a status code ${error.response.status}`);
+    } else if (error.request) {
+      throw new Error(`On load ${uri} no respons was received from ${host}`);
+    }
+    throw error;
+  }
 };
 
-const validateUrl = uri => Promise.resolve(log(`Try to validate URL ${uri}`))
-  .then(() => {
+const validateUrl = (uri) => {
+  let parsedUrl;
+  try {
     log(`Try to parce url string ${uri}`);
-    return url.parse(uri);
-  })
-  .catch(() => {
+    parsedUrl = url.parse(uri);
+  } catch (error) {
     throw new Error('Can not read input URL');
-  })
-  .then(({ protocol, host }) => {
-    if ((protocol !== 'http:' && protocol !== 'https:') || !host) {
-      throw new Error(`URL "${uri}" is not valid`);
-    }
-    log(`URL ${uri} is valid`);
-    return true;
-  });
+  }
+  if ((parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') || !parsedUrl.host) {
+    throw new Error(`URL "${uri}" is not valid`);
+  }
+  log(`URL ${uri} is valid`);
+  return true;
+};
 
 export { loadResource, validateUrl };

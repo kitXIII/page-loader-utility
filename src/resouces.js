@@ -35,54 +35,48 @@ const changeLocalResourcesLinks = (page, links, outputPath) => {
 };
 
 const linksProceses = {
-  script: (linkUri, fileSavePath) => loadResource(linkUri, {
-    validateStatus: status => status === 200,
-  })
-    .then(data => writeFile(fileSavePath, data, 'utf8')),
-
-  link: (linkUri, fileSavePath) => loadResource(linkUri, {
-    validateStatus: status => status === 200,
-  })
-    .then(data => writeFile(fileSavePath, data, 'utf8')),
-
-  img: (linkUri, fileSavePath) => loadResource(linkUri, {
-    validateStatus: status => status === 200,
-    responseType: 'arraybuffer',
-  })
-    .then((data) => {
-      const binaryData = Buffer.from(data);
-      return writeFile(fileSavePath, binaryData);
-    }),
+  script: async (linkUri, fileSavePath) => {
+    const data = await loadResource(linkUri, { validateStatus: status => status === 200 });
+    await writeFile(fileSavePath, data, 'utf8');
+  },
+  link: async (linkUri, fileSavePath) => {
+    const data = await loadResource(linkUri, { validateStatus: status => status === 200 });
+    await writeFile(fileSavePath, data, 'utf8');
+  },
+  img: async (linkUri, fileSavePath) => {
+    const data = await loadResource(linkUri, {
+      validateStatus: status => status === 200,
+      responseType: 'arraybuffer',
+    });
+    const binaryData = Buffer.from(data);
+    await writeFile(fileSavePath, binaryData);
+  },
 };
 
-export default (uri, outputPath, page, useListr) => {
+export default async (uri, outputPath, page, useListr) => {
   log('Try to get local resources links');
   const links = getLocalResoucesLinks(page);
-  const count = links.length;
-  log(`Links to resources are received in quantity: ${count}`);
-  if (count === 0) {
+
+  if (links.length === 0) {
     log('No resources to download');
     return page;
   }
 
-  log(`Use listr: ${useListr}`);
-  const batchLoad = getBatchLoader(useListr);
+  await makeDir(outputPath);
 
+  const batchLoad = getBatchLoader(useListr);
   const preparedLinks = links.map(({ tag, pathname }) => ({
     uri: url.resolve(uri, pathname),
     path: path.resolve(outputPath, getNameByPathname(pathname)),
     process: linksProceses[tag],
   }));
 
-  return makeDir(outputPath)
-    .then(() => {
-      log(`Run batch load resources of page ${uri}`);
-      return batchLoad(preparedLinks);
-    })
-    .then(() => {
-      log('Successful batch processing of resources, try to change links on page');
-      const changedPage = changeLocalResourcesLinks(page, links, outputPath);
-      log(`Links on page ${uri} was changed`);
-      return changedPage;
-    });
+  log(`Run batch load resources of page ${uri}, use listr: ${useListr}`);
+  await batchLoad(preparedLinks);
+  log('Successful batch processing of resources, try to change links on page');
+
+  const changedPage = changeLocalResourcesLinks(page, links, outputPath);
+  log(`Links on page ${uri} was changed`);
+
+  return changedPage;
 };
