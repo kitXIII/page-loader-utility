@@ -30,6 +30,9 @@
     "url": "https://github.com/kitXIII/project-lvl3-s310/issues"
   },
   "homepage": "https://github.com/kitXIII/project-lvl3-s310#readme",
+  "engines": {
+    "node": "10"
+  },
   "jest": {
     "testEnvironment": "node",
     "collectCoverage": true,
