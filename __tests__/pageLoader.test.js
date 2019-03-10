@@ -18,11 +18,12 @@ beforeAll(async () => {
   body = await fsPromises.readFile(bodyFilePath, 'utf8');
 });
 
-afterAll(() => {
+afterAll((done) => {
   rimraf(tmpDir, (err) => {
     if (err) {
       console.errror(err.message);
     }
+    done();
   });
 });
 
