@@ -25,7 +25,7 @@ afterAll((done) => {
     }
     done();
   });
-});
+}, 5000);
 
 describe('Page load tests', () => {
   test('Download page without resources and write it to file', async () => {
