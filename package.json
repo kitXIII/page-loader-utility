@@ -1,6 +1,6 @@
 {
   "name": "kit-page-loader",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Page load utility",
   "bin": {
     "page-loader": "dist/bin/page-loader.js"
